@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Scientific Calculator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="calculator" id="calculator">
+        <div class="header">
+            <div class="calculator-brand">
+                <h2>Scientific Calculator</h2>
+                <div class="display-mode">
+                    <span>DEG</span>
+                </div>
+            </div>
+            <div class="theme-switcher">
+                <button onclick="changeTheme('classic')" title="Classic">📱</button>
+                <button onclick="changeTheme('dark-sci')" title="Dark Scientific">🔬</button>
+                <button onclick="changeTheme('blue-sci')" title="Blue Scientific">🧪</button>
+                <button onclick="changeTheme('graphing')" title="Graphing">📈</button>
+                <button onclick="changeTheme('matrix')" title="Matrix">🟢</button>
+                <button onclick="changeTheme('retro')" title="Retro">👾</button>
+                <button onclick="changeTheme('modern')" title="Modern">💎</button>
+            </div>
+        </div>
+        
+        <div class="display-container">
+            <div class="led-display">
+                <div class="display-content">
+                    <span class="expression" id="expression"></span>
+                    <span class="main-display" id="mainDisplay">0</span>
+                </div>
+                <div class="led-grid"></div>
+            </div>
+            <div class="memory-indicator" id="memoryIndicator">M</div>
+            <div class="mode-indicators">
+                <span class="mode-indicator" id="degIndicator">DEG</span>
+                <span class="mode-indicator" id="sciIndicator">SCI</span>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <div class="history-section">
+                <button onclick="toggleHistory()" class="history-btn">📜 History</button>
+                <div class="history-panel" id="historyPanel">
+                    <div class="history-header">
+                        <h3>Calculation History</h3>
+                        <button onclick="clearHistory()" class="clear-history">Clear</button>
+                    </div>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+            </div>
+
+            <div class="converter-section">
+                <button onclick="toggleConverter()" class="converter-btn">🔄 Unit Converter</button>
+                <div class="converter-panel" id="converterPanel">
+                    <div class="converter-header">
+                        <h3>Unit Converter</h3>
+                        <select id="converterType" onchange="updateConverterUnits()">
+                            <option value="length">Length</option>
+                            <option value="weight">Weight</option>
+                            <option value="temperature">Temperature</option>
+                            <option value="area">Area</option>
+                            <option value="volume">Volume</option>
+                        </select>
+                    </div>
+                    <div class="converter-inputs">
+                        <input type="number" id="converterInput" placeholder="Enter value" oninput="convertUnits()">
+                        <select id="converterFrom"></select>
+                        <span>to</span>
+                        <select id="converterTo"></select>
+                    </div>
+                    <div class="converter-result" id="converterResult"></div>
+                    <button onclick="useConverterResult()" class="use-result-btn">Use in Calculator</button>
+                </div>
+            </div>
+
+            <div class="camera-section">
+                <button onclick="toggleCamera()" class="camera-btn">📷 Camera Math Solver</button>
+                <button onclick="startVoiceCommands()" class="voice-btn">🎤 Voice Commands</button>
+                
+                <div class="camera-container" id="cameraContainer" style="display: none;">
+                    <video id="cameraVideo" autoplay playsinline></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                    
+                    <div class="camera-controls">
+                        <button onclick="captureMathProblem()" class="capture-btn">Capture & Solve</button>
+                        <button onclick="toggleCamera()" class="cancel-btn">Cancel</button>
+                    </div>
+                    
+                    <div class="camera-result" id="cameraResult"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="calculator-body">
+            <div class="scientific-buttons">
+                <div class="scientific-column">
+                    <button onclick="sin()" class="sci-btn">sin</button>
+                    <button onclick="cos()" class="sci-btn">cos</button>
+                    <button onclick="tan()" class="sci-btn">tan</button>
+                    <button onclick="log()" class="sci-btn">log</button>
+                    <button onclick="ln()" class="sci-btn">ln</button>
+                    <button onclick="factorial()" class="sci-btn">x!</button>
+                    <button onclick="pi()" class="sci-btn">π</button>
+                    <button onclick="e()" class="sci-btn">e</button>
+                </div>
+                
+                <div class="main-buttons">
+                    <div class="button-row">
+                        <button onclick="memoryClear()" class="mem-btn">MC</button>
+                        <button onclick="memoryRecall()" class="mem-btn">MR</button>
+                        <button onclick="memoryAdd()" class="mem-btn">M+</button>
+                        <button onclick="memorySubtract()" class="mem-btn">M-</button>
+                        <button onclick="clearDisplay()" class="clear">C</button>
+                        <button onclick="backspace()" class="op-btn">⌫</button>
+                        <button onclick="appendToDisplay('%')" class="op-btn">%</button>
+                        <button onclick="appendToDisplay('/')" class="op-btn">÷</button>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button onclick="power(2)" class="sci-btn">x²</button>
+                        <button onclick="squareRoot()" class="sci-btn">√</button>
+                        <button onclick="power(10)" class="sci-btn">10ˣ</button>
+                        <button onclick="appendToDisplay('7')">7</button>
+                        <button onclick="appendToDisplay('8')">8</button>
+                        <button onclick="appendToDisplay('9')">9</button>
+                        <button onclick="appendToDisplay('*')" class="op-btn">×</button>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button onclick="inverse()" class="sci-btn">1/x</button>
+                        <button onclick="power()" class="sci-btn">x^y</button>
+                        <button onclick="absolute()" class="sci-btn">|x|</button>
+                        <button onclick="appendToDisplay('4')">4</button>
+                        <button onclick="appendToDisplay('5')">5</button>
+                        <button onclick="appendToDisplay('6')">6</button>
+                        <button onclick="appendToDisplay('-')" class="op-btn">-</button>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button onclick="sinh()" class="sci-btn">sinh</button>
+                        <button onclick="cosh()" class="sci-btn">cosh</button>
+                        <button onclick="tanh()" class="sci-btn">tanh</button>
+                        <button onclick="appendToDisplay('1')">1</button>
+                        <button onclick="appendToDisplay('2')">2</button>
+                        <button onclick="appendToDisplay('3')">3</button>
+                        <button onclick="appendToDisplay('+')" class="op-btn plus">+</button>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button onclick="toggleSign()" class="sci-btn">±</button>
+                        <button onclick="appendToDisplay('0')" class="zero">0</button>
+                        <button onclick="appendToDisplay('.')">.</button>
+                        <button onclick="calculate()" class="equals">=</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="calculator-footer">
+            <div class="mode-buttons">
+                <button onclick="toggleAngleMode()" class="mode-btn" id="angleMode">DEG</button>
+                <button onclick="toggleDisplayMode()" class="mode-btn">F-E</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
