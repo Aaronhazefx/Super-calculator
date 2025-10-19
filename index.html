@@ -1,171 +1,390 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Super Scientific Calculator</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <title>Super Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1e1e1e; color: white; padding: 20px; }
+        
+        .calculator { max-width: 400px; margin: 0 auto; background: #2c3e50; padding: 20px; border-radius: 15px; }
+        
+        .display { background: #1a252f; padding: 20px; border-radius: 10px; margin-bottom: 15px; text-align: right; }
+        #mainDisplay { font-size: 2.5em; color: #00ff00; font-family: monospace; min-height: 60px; }
+        #expression { color: #95a5a6; font-size: 1.2em; min-height: 25px; }
+        
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        button { padding: 15px; font-size: 1.2em; border: none; border-radius: 8px; cursor: pointer; background: #34495e; color: white; }
+        button:active { transform: scale(0.95); }
+        
+        .number { background: #2c3e50; }
+        .operator { background: #e67e22; }
+        .function { background: #3498db; }
+        .equals { background: #27ae60; grid-column: span 2; }
+        .clear { background: #e74c3c; }
+        
+        .features { margin: 15px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .feature-btn { background: #9b59b6; padding: 10px; }
+        
+        .history-panel { background: #34495e; padding: 15px; border-radius: 10px; margin-top: 10px; display: none; max-height: 200px; overflow-y: auto; }
+        
+        /* Camera Styles */
+        .camera-section { background: #34495e; padding: 15px; border-radius: 10px; margin: 10px 0; display: none; }
+        .camera-preview { width: 100%; height: 200px; background: #2c3e50; border: 2px dashed #7f8c8d; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 10px 0; }
+        .math-examples { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 10px 0; }
+        .math-example { background: #2c3e50; padding: 8px; border-radius: 5px; text-align: center; cursor: pointer; }
+        .camera-result { background: #2c3e50; padding: 15px; border-radius: 5px; margin: 10px 0; min-height: 60px; }
+    </style>
 </head>
 <body>
-    <div class="calculator" id="calculator">
-        <div class="header">
-            <div class="calculator-brand">
-                <h2>Scientific Calculator</h2>
-                <div class="display-mode">
-                    <span>DEG</span>
+    <div class="calculator">
+        <div class="display">
+            <div id="expression"></div>
+            <div id="mainDisplay">0</div>
+        </div>
+        
+        <div class="features">
+            <button class="feature-btn" onclick="toggleHistory()">📜 History</button>
+            <button class="feature-btn" onclick="toggleConverter()">🔄 Converter</button>
+            <button class="feature-btn" onclick="toggleCamera()">📷 Math Solver</button>
+            <button class="feature-btn" onclick="showThemes()">🎨 Themes</button>
+        </div>
+        
+        <!-- Camera Section -->
+        <div class="camera-section" id="cameraSection">
+            <h3>Math Problem Solver</h3>
+            <div class="camera-preview" id="cameraPreview">
+                <div style="text-align: center;">
+                    <div style="font-size: 3em;">📷</div>
+                    <div>Math Camera Ready</div>
                 </div>
             </div>
-            <div class="theme-switcher">
-                <button onclick="changeTheme('classic')" title="Classic">📱</button>
-                <button onclick="changeTheme('dark-sci')" title="Dark Scientific">🔬</button>
-                <button onclick="changeTheme('blue-sci')" title="Blue Scientific">🧪</button>
-                <button onclick="changeTheme('graphing')" title="Graphing">📈</button>
-                <button onclick="changeTheme('matrix')" title="Matrix">🟢</button>
-                <button onclick="changeTheme('retro')" title="Retro">👾</button>
-                <button onclick="changeTheme('modern')" title="Modern">💎</button>
+            
+            <div class="math-examples">
+                <div class="math-example" onclick="solveMathProblem('15 + 7 × 3')">15 + 7 × 3</div>
+                <div class="math-example" onclick="solveMathProblem('√144 + 5²')">√144 + 5²</div>
+                <div class="math-example" onclick="solveMathProblem('sin(30) × 10')">sin(30) × 10</div>
+                <div class="math-example" onclick="solveMathProblem('2³ + 4 × 5')">2³ + 4 × 5</div>
+            </div>
+            
+            <button onclick="openCamera()" style="background: #3498db; width: 100%; padding: 12px; margin: 5px 0;">📱 Use Phone Camera</button>
+            <button onclick="solveRandomProblem()" style="background: #27ae60; width: 100%; padding: 12px; margin: 5px 0;">🎲 Solve Random Problem</button>
+            
+            <div class="camera-result" id="cameraResult">
+                Select a math problem or use your camera
             </div>
         </div>
         
-        <div class="display-container">
-            <div class="led-display">
-                <div class="display-content">
-                    <span class="expression" id="expression"></span>
-                    <span class="main-display" id="mainDisplay">0</span>
-                </div>
-                <div class="led-grid"></div>
+        <!-- History Panel -->
+        <div class="history-panel" id="historyPanel">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <h3>History</h3>
+                <button onclick="clearHistory()" style="background: #e74c3c; padding: 5px 10px;">Clear</button>
             </div>
-            <div class="memory-indicator" id="memoryIndicator">M</div>
-            <div class="mode-indicators">
-                <span class="mode-indicator" id="degIndicator">DEG</span>
-                <span class="mode-indicator" id="sciIndicator">SCI</span>
-            </div>
-        </div>
-
-        <div class="features-section">
-            <div class="history-section">
-                <button onclick="toggleHistory()" class="history-btn">📜 History</button>
-                <div class="history-panel" id="historyPanel">
-                    <div class="history-header">
-                        <h3>Calculation History</h3>
-                        <button onclick="clearHistory()" class="clear-history">Clear</button>
-                    </div>
-                    <div class="history-list" id="historyList"></div>
-                </div>
-            </div>
-
-            <div class="converter-section">
-                <button onclick="toggleConverter()" class="converter-btn">🔄 Unit Converter</button>
-                <div class="converter-panel" id="converterPanel">
-                    <div class="converter-header">
-                        <h3>Unit Converter</h3>
-                        <select id="converterType" onchange="updateConverterUnits()">
-                            <option value="length">Length</option>
-                            <option value="weight">Weight</option>
-                            <option value="temperature">Temperature</option>
-                            <option value="area">Area</option>
-                            <option value="volume">Volume</option>
-                        </select>
-                    </div>
-                    <div class="converter-inputs">
-                        <input type="number" id="converterInput" placeholder="Enter value" oninput="convertUnits()">
-                        <select id="converterFrom"></select>
-                        <span>to</span>
-                        <select id="converterTo"></select>
-                    </div>
-                    <div class="converter-result" id="converterResult"></div>
-                    <button onclick="useConverterResult()" class="use-result-btn">Use in Calculator</button>
-                </div>
-            </div>
-
-            <div class="camera-section">
-                <button onclick="toggleCamera()" class="camera-btn">📷 Camera Math Solver</button>
-                <button onclick="startVoiceCommands()" class="voice-btn">🎤 Voice Commands</button>
-                
-                <div class="camera-container" id="cameraContainer" style="display: none;">
-                    <video id="cameraVideo" autoplay playsinline></video>
-                    <canvas id="cameraCanvas" style="display: none;"></canvas>
-                    
-                    <div class="camera-controls">
-                        <button onclick="captureMathProblem()" class="capture-btn">Capture & Solve</button>
-                        <button onclick="toggleCamera()" class="cancel-btn">Cancel</button>
-                    </div>
-                    
-                    <div class="camera-result" id="cameraResult"></div>
-                </div>
-            </div>
+            <div id="historyList"></div>
         </div>
         
-        <div class="calculator-body">
-            <div class="scientific-buttons">
-                <div class="scientific-column">
-                    <button onclick="sin()" class="sci-btn">sin</button>
-                    <button onclick="cos()" class="sci-btn">cos</button>
-                    <button onclick="tan()" class="sci-btn">tan</button>
-                    <button onclick="log()" class="sci-btn">log</button>
-                    <button onclick="ln()" class="sci-btn">ln</button>
-                    <button onclick="factorial()" class="sci-btn">x!</button>
-                    <button onclick="pi()" class="sci-btn">π</button>
-                    <button onclick="e()" class="sci-btn">e</button>
-                </div>
-                
-                <div class="main-buttons">
-                    <div class="button-row">
-                        <button onclick="memoryClear()" class="mem-btn">MC</button>
-                        <button onclick="memoryRecall()" class="mem-btn">MR</button>
-                        <button onclick="memoryAdd()" class="mem-btn">M+</button>
-                        <button onclick="memorySubtract()" class="mem-btn">M-</button>
-                        <button onclick="clearDisplay()" class="clear">C</button>
-                        <button onclick="backspace()" class="op-btn">⌫</button>
-                        <button onclick="appendToDisplay('%')" class="op-btn">%</button>
-                        <button onclick="appendToDisplay('/')" class="op-btn">÷</button>
-                    </div>
-                    
-                    <div class="button-row">
-                        <button onclick="power(2)" class="sci-btn">x²</button>
-                        <button onclick="squareRoot()" class="sci-btn">√</button>
-                        <button onclick="power(10)" class="sci-btn">10ˣ</button>
-                        <button onclick="appendToDisplay('7')">7</button>
-                        <button onclick="appendToDisplay('8')">8</button>
-                        <button onclick="appendToDisplay('9')">9</button>
-                        <button onclick="appendToDisplay('*')" class="op-btn">×</button>
-                    </div>
-                    
-                    <div class="button-row">
-                        <button onclick="inverse()" class="sci-btn">1/x</button>
-                        <button onclick="power()" class="sci-btn">x^y</button>
-                        <button onclick="absolute()" class="sci-btn">|x|</button>
-                        <button onclick="appendToDisplay('4')">4</button>
-                        <button onclick="appendToDisplay('5')">5</button>
-                        <button onclick="appendToDisplay('6')">6</button>
-                        <button onclick="appendToDisplay('-')" class="op-btn">-</button>
-                    </div>
-                    
-                    <div class="button-row">
-                        <button onclick="sinh()" class="sci-btn">sinh</button>
-                        <button onclick="cosh()" class="sci-btn">cosh</button>
-                        <button onclick="tanh()" class="sci-btn">tanh</button>
-                        <button onclick="appendToDisplay('1')">1</button>
-                        <button onclick="appendToDisplay('2')">2</button>
-                        <button onclick="appendToDisplay('3')">3</button>
-                        <button onclick="appendToDisplay('+')" class="op-btn plus">+</button>
-                    </div>
-                    
-                    <div class="button-row">
-                        <button onclick="toggleSign()" class="sci-btn">±</button>
-                        <button onclick="appendToDisplay('0')" class="zero">0</button>
-                        <button onclick="appendToDisplay('.')">.</button>
-                        <button onclick="calculate()" class="equals">=</button>
-                    </div>
-                </div>
+        <!-- Converter Panel -->
+        <div class="converter-panel" id="converterPanel" style="display: none; background: #34495e; padding: 15px; border-radius: 10px; margin: 10px 0;">
+            <h3>Unit Converter</h3>
+            <input type="number" id="converterInput" placeholder="Enter value" style="width: 100%; padding: 10px; margin: 10px 0; background: #2c3e50; color: white; border: 1px solid #4a6078; border-radius: 5px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                <select id="converterFrom" style="padding: 10px; background: #2c3e50; color: white; border: 1px solid #4a6078; border-radius: 5px;"></select>
+                <select id="converterTo" style="padding: 10px; background: #2c3e50; color: white; border: 1px solid #4a6078; border-radius: 5px;"></select>
             </div>
+            <div id="converterResult" style="background: #2c3e50; padding: 10px; border-radius: 5px; margin: 10px 0; text-align: center; color: #27ae60;"></div>
+            <button onclick="useConverterResult()" style="background: #27ae60; width: 100%; padding: 10px;">Use in Calculator</button>
         </div>
-        
-        <div class="calculator-footer">
-            <div class="mode-buttons">
-                <button onclick="toggleAngleMode()" class="mode-btn" id="angleMode">DEG</button>
-                <button onclick="toggleDisplayMode()" class="mode-btn">F-E</button>
-            </div>
+
+        <!-- Calculator Buttons -->
+        <div class="buttons">
+            <!-- Row 1 -->
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="function" onclick="backspace()">⌫</button>
+            <button class="function" onclick="appendToDisplay('%')">%</button>
+            <button class="operator" onclick="appendToDisplay('/')">÷</button>
+            
+            <!-- Row 2 -->
+            <button class="function" onclick="squareRoot()">√</button>
+            <button class="number" onclick="appendToDisplay('7')">7</button>
+            <button class="number" onclick="appendToDisplay('8')">8</button>
+            <button class="number" onclick="appendToDisplay('9')">9</button>
+            
+            <!-- Row 3 -->
+            <button class="function" onclick="power(2)">x²</button>
+            <button class="number" onclick="appendToDisplay('4')">4</button>
+            <button class="number" onclick="appendToDisplay('5')">5</button>
+            <button class="number" onclick="appendToDisplay('6')">6</button>
+            
+            <!-- Row 4 -->
+            <button class="function" onclick="appendToDisplay('(')">(</button>
+            <button class="number" onclick="appendToDisplay('1')">1</button>
+            <button class="number" onclick="appendToDisplay('2')">2</button>
+            <button class="number" onclick="appendToDisplay('3')">3</button>
+            
+            <!-- Row 5 -->
+            <button class="function" onclick="appendToDisplay(')')">)</button>
+            <button class="number" onclick="appendToDisplay('0')">0</button>
+            <button class="number" onclick="appendToDisplay('.')">.</button>
+            <button class="operator" onclick="appendToDisplay('*')">×</button>
+            
+            <!-- Row 6 -->
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            <button class="equals" onclick="calculate()">=</button>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        // BASIC CALCULATOR FUNCTIONS
+        let currentExpression = '';
+        let calculationHistory = [];
+        
+        function appendToDisplay(value) {
+            const display = document.getElementById('mainDisplay');
+            if (display.textContent === '0' || display.textContent === 'Error') {
+                display.textContent = value;
+            } else {
+                display.textContent += value;
+            }
+        }
+        
+        function clearDisplay() {
+            document.getElementById('mainDisplay').textContent = '0';
+            document.getElementById('expression').textContent = '';
+            currentExpression = '';
+        }
+        
+        function backspace() {
+            const display = document.getElementById('mainDisplay');
+            if (display.textContent.length > 1) {
+                display.textContent = display.textContent.slice(0, -1);
+            } else {
+                display.textContent = '0';
+            }
+        }
+        
+        function calculate() {
+            const display = document.getElementById('mainDisplay');
+            try {
+                const expression = display.textContent.replace(/×/g, '*').replace(/÷/g, '/');
+                const result = eval(expression);
+                document.getElementById('expression').textContent = display.textContent + ' =';
+                display.textContent = result;
+                
+                // Add to history
+                calculationHistory.unshift({
+                    expression: display.textContent,
+                    result: result,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                if (calculationHistory.length > 10) calculationHistory.pop();
+                
+            } catch (error) {
+                display.textContent = 'Error';
+            }
+        }
+        
+        function squareRoot() {
+            const display = document.getElementById('mainDisplay');
+            const value = parseFloat(display.textContent);
+            if (!isNaN(value) && value >= 0) {
+                display.textContent = Math.sqrt(value);
+            } else {
+                display.textContent = 'Error';
+            }
+        }
+        
+        function power(exponent) {
+            const display = document.getElementById('mainDisplay');
+            const value = parseFloat(display.textContent);
+            if (!isNaN(value)) {
+                display.textContent = Math.pow(value, exponent);
+            }
+        }
+
+        // CAMERA MATH SOLVER FUNCTIONS
+        function toggleCamera() {
+            const panel = document.getElementById('cameraSection');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function solveMathProblem(problem) {
+            const resultDiv = document.getElementById('cameraResult');
+            
+            try {
+                // Convert math notation to JavaScript
+                let expression = problem
+                    .replace(/×/g, '*')
+                    .replace(/²/g, '**2')
+                    .replace(/³/g, '**3')
+                    .replace(/√(\d+)/g, 'Math.sqrt($1)')
+                    .replace(/sin\((\d+)\)/g, 'Math.sin($1 * Math.PI / 180)');
+                
+                const result = eval(expression);
+                
+                resultDiv.innerHTML = `
+                    <div style="color: #27ae60; font-weight: bold; font-size: 1.2em;">
+                        📷 Solved: ${problem} = ${result}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button onclick="useSolvedProblem('${problem}')" style="background: #3498db; padding: 8px; width: 100%; margin: 5px 0;">
+                            Use Problem in Calculator
+                        </button>
+                        <button onclick="useSolvedResult(${result})" style="background: #27ae60; padding: 8px; width: 100%; margin: 5px 0;">
+                            Use Result in Calculator
+                        </button>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: #e74c3c;">❌ Could not solve: ${problem}</div>`;
+            }
+        }
+        
+        function useSolvedProblem(problem) {
+            document.getElementById('mainDisplay').textContent = problem.replace(/×/g, '*');
+        }
+        
+        function useSolvedResult(result) {
+            document.getElementById('mainDisplay').textContent = result;
+        }
+        
+        function solveRandomProblem() {
+            const problems = [
+                '15 + 7 × 3',
+                '√144 + 5²',
+                'sin(30) × 10',
+                '2³ + 4 × 5',
+                'π × 7²',
+                '10² - 6 × 4',
+                '√169 + 3³',
+                '15 × 4 + 23'
+            ];
+            
+            const randomProblem = problems[Math.floor(Math.random() * problems.length)];
+            solveMathProblem(randomProblem);
+        }
+        
+        function openCamera() {
+            const resultDiv = document.getElementById('cameraResult');
+            resultDiv.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 2em;">📱</div>
+                    <div style="margin: 10px 0;">
+                        <strong>Camera Instructions:</strong>
+                    </div>
+                    <div style="text-align: left; font-size: 0.9em;">
+                        1. Point your camera at a math problem<br>
+                        2. Take a photo<br>
+                        3. Type the problem below<br>
+                        4. Click "Solve This Problem"
+                    </div>
+                    <input type="text" id="manualProblem" placeholder="Type the math problem here" style="width: 100%; padding: 10px; margin: 10px 0; background: #2c3e50; color: white; border: 1px solid #4a6078; border-radius: 5px;">
+                    <button onclick="solveManualProblem()" style="background: #27ae60; padding: 10px; width: 100%;">
+                        Solve This Problem
+                    </button>
+                </div>
+            `;
+        }
+        
+        function solveManualProblem() {
+            const problem = document.getElementById('manualProblem').value;
+            if (problem) {
+                solveMathProblem(problem);
+            }
+        }
+
+        // HISTORY FUNCTIONS
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            renderHistory();
+        }
+        
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            calculationHistory.forEach(item => {
+                const div = document.createElement('div');
+                div.style.padding = '8px';
+                div.style.borderBottom = '1px solid #4a6078';
+                div.style.cursor = 'pointer';
+                div.onclick = () => {
+                    document.getElementById('mainDisplay').textContent = item.result;
+                };
+                div.innerHTML = `<div>${item.expression} = ${item.result}</div><small>${item.timestamp}</small>`;
+                list.appendChild(div);
+            });
+        }
+        
+        function clearHistory() {
+            calculationHistory = [];
+            renderHistory();
+        }
+
+        // UNIT CONVERTER FUNCTIONS
+        const unitConversions = {
+            length: { meters: 1, kilometers: 1000, centimeters: 0.01, miles: 1609.34, feet: 0.3048 },
+            weight: { kilograms: 1, grams: 0.001, pounds: 0.453592, ounces: 0.0283495 }
+        };
+        
+        function toggleConverter() {
+            const panel = document.getElementById('converterPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            updateConverterUnits();
+        }
+        
+        function updateConverterUnits() {
+            const from = document.getElementById('converterFrom');
+            const to = document.getElementById('converterTo');
+            from.innerHTML = ''; to.innerHTML = '';
+            
+            Object.keys(unitConversions.length).forEach(unit => {
+                from.add(new Option(unit, unit));
+                to.add(new Option(unit, unit));
+            });
+            
+            from.value = 'meters'; to.value = 'feet';
+            convertUnits();
+        }
+        
+        function convertUnits() {
+            const input = parseFloat(document.getElementById('converterInput').value) || 0;
+            const from = document.getElementById('converterFrom').value;
+            const to = document.getElementById('converterTo').value;
+            const result = (input * unitConversions.length[from]) / unitConversions.length[to];
+            document.getElementById('converterResult').textContent = `${input} ${from} = ${result.toFixed(4)} ${to}`;
+        }
+        
+        function useConverterResult() {
+            const result = document.getElementById('converterResult').textContent.split(' = ')[1].split(' ')[0];
+            document.getElementById('mainDisplay').textContent = result;
+        }
+
+        // THEMES
+        function showThemes() {
+            const themes = {
+                dark: { bg: '#2c3e50', display: '#1a252f', button: '#34495e' },
+                blue: { bg: '#1e3c72', display: '#0d1b36', button: '#2a5298' },
+                green: { bg: '#1a5c1a', display: '#0a3a0a', button: '#2d7a2d' }
+            };
+            
+            const themeNames = Object.keys(themes);
+            const currentTheme = themeNames[Math.floor(Math.random() * themeNames.length)];
+            const theme = themes[currentTheme];
+            
+            document.querySelector('.calculator').style.background = theme.bg;
+            document.querySelector('.display').style.background = theme.display;
+            document.querySelectorAll('button').forEach(btn => {
+                if (!btn.className.includes('operator') && !btn.className.includes('equals') && !btn.className.includes('clear')) {
+                    btn.style.background = theme.button;
+                }
+            });
+        }
+
+        // INITIALIZE
+        updateConverterUnits();
+    </script>
 </body>
 </html>
